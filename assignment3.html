@@ -192,6 +192,7 @@
 
             var enteredEmail = document.getElementById("email").value;
             var enteredAddress = document.getElementById("address").value;
+            console.log("email: " + enteredEmail);
 
             var likedMostChecked = document.getElementsByName("mostliked");
             var howInterestedChecked = document.getElementsByName("foundout");
@@ -225,13 +226,13 @@
                 console.log("name regex test failed");
                 document.getElementById("firstName").value = "";
                 document.getElementById("lastName").value = "";
-                document.getElementById("firstName").insertAdjacentHTML("afterend", "<input type = \"text\"> <b> Please make sure your name only has alphabets </input>");
-                document.getElementById("lastName").insertAdjacentHTML("afterend", "<input type = \"text\"> <b> Please make sure your name only has alphabets </input>");
+                document.getElementById("firstName").insertAdjacentHTML("afterend", "<p> <b> Please make sure your name only has alphabets </b> </p>");
+                document.getElementById("lastName").insertAdjacentHTML("afterend", "<p> <b> Please make sure your name only has alphabets </p>");
             }
 
             //check if email address is in valid format
             var emailRegex = new RegExp('/^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/');
-            if (!enteredEmail.test(emailRegex))
+            if (!emailRegex.test(enteredEmail))
             {
                 console.log("email regex test failed");
                 document.getElementById("email").value = "";
@@ -249,7 +250,7 @@
         <h1>GMU Department of Computer Science User Feedback Survey</h1>
         <h3><i> Please fill out the following information below: </i></h3>
 
-        <form name="usersurvey" onsubmit="handleSubmittedUserData()">
+        <form name="usersurvey" onsubmit="handleSubmittedUserData(); return false">
 
             <!--
                  Good morning <span id = "username"></span>
