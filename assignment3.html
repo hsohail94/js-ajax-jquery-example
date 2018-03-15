@@ -186,6 +186,25 @@
         //validating user data
         function handleSubmittedUserData()
         {
+            //get rid of existing error messages
+            //if user input is still bad, they will be reprinted
+            var nameError1 = document.getElementById("nameError1");
+            var nameError2 = document.getElementById("nameError2");
+            var emailError = document.getElementById("emailError");
+            var radioError = document.getElementById("radioError");
+            var checkboxError = document.getElementById("checkboxError");
+
+            if (nameError1 != null)
+                nameError1.parentNode.removeChild(nameError1);
+            if (nameError2 != null)
+                nameError2.parentNode.removeChild(nameError2);
+            if (emailError != null)
+                emailError.parentNode.removeChild(emailError);
+            if (radioError != null)
+                radioError.parentNode.removeChild(radioError);
+            if (checkboxError != null)
+                checkboxError.parentNode.removeChild(checkboxError);
+
             var enteredName = document.getElementById("firstName").value + 
                                 document.getElementById("lastName").value;
             console.log("full name: " + enteredName);
@@ -219,24 +238,36 @@
                 }
             }
 
+            
+            //print error message if user hasn't selected radio element
+            if (!radioChecked)
+            { 
+                howInterestedChecked[0].insertAdjacentHTML("beforebegin", "<p id=\"radioError\"> <b> Please pick an option. </b> </p>");
+            }
+
+            //print error message if user hasn't select at least 2 checkbox elements
+            if (checkboxCount < 2)
+            {
+                likedMostChecked[0].insertAdjacentHTML("beforebegin", "<p id=\"checkboxError\"> <b> Please pick at least two options. </b> </p>");
+            }
+
             //check if full name is alphabets-only
-            var alphabetsOnlyRegex = new RegExp('/^[a-zA-Z]*$/');
-            if (!alphabetsOnlyRegex.test(enteredName))
+            //(note: RegExp.match was not working for me, so I resorted to using string.match(regexp) instead)
+            if (!enteredName.match(/^[a-zA-Z]+$/))
             {
                 console.log("name regex test failed");
                 document.getElementById("firstName").value = "";
                 document.getElementById("lastName").value = "";
-                document.getElementById("firstName").insertAdjacentHTML("afterend", "<p> <b> Please make sure your name only has alphabets </b> </p>");
-                document.getElementById("lastName").insertAdjacentHTML("afterend", "<p> <b> Please make sure your name only has alphabets </p>");
+                document.getElementById("firstName").insertAdjacentHTML("afterend", "<p id=\"nameError1\"> <b> Please make sure your name only has alphabets </b> </p>");
+                document.getElementById("lastName").insertAdjacentHTML("afterend", "<p id=\"nameError2\"> <b> Please make sure your name only has alphabets </p>");
             }
 
             //check if email address is in valid format
-            var emailRegex = new RegExp('/^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/');
-            if (!emailRegex.test(enteredEmail))
+            if (!enteredEmail.match(/^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/))
             {
                 console.log("email regex test failed");
                 document.getElementById("email").value = "";
-                document.getElementById("email").insertAdjacentHTML("afterend", "<input type = \"text\"> <b> Please enter a valid email adress. </input>");
+                document.getElementById("email").insertAdjacentHTML("afterend", "<p id=\"emailError\"> <b> Please enter a valid email adress. </b> </p>");
             }
 
 
