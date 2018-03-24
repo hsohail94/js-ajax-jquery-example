@@ -1,62 +1,13 @@
-//set username cookie to value cookieValue to expire in expiryDays
-function setUsernameCookie (cookieValue, expiryDays)
-{
-    //date object for current time/date
-    var date = new Date();
-
-    //expiry time = current time + days*24*60*60*1000
-    date.setTime(date.getTime() + (expiryDays*24*60*60*1000)) 
-
-    //line which actually sets the username cookie
-    document.cookie = "username=" + cookieValue + ";expires=" + date.toUTCString() + ";path=/";
-}
-
-//function to get username cookie (if it was set)
-function getUsernameCookie()
-{
-    var usernameCookie = "username=";
-
-    //comprehensive cookies list, separated by semi-colon
-    //var cookiesList = document.cookie.split(";");
-    var decodedCookie = decodeURIComponent(document.cookie);
-    var cookiesList = decodedCookie.split(';');
-
-    //iterate through cookies to look for "username="; return null if not found
-    for (var i = 0; i < cookiesList.length; i++)
-    {
-        var cookieElement = cookiesList[i];
-        while (cookieElement.charAt(0) == ' ')
-        {
-            cookieElement = cookieElement.substring(1);
-        }
-        if (cookieElement.indexOf(usernameCookie) == 0)
-        {
-            return cookieElement.substring(usernameCookie.length, cookieElement.length);
-        }
-        
-    }
-    return ""; //return nothing if username cookie not found
-}
-
-//if username cookie is not set, set it. otherwise, get it and display it
-function checkUsernameCookie()
-{
-    var username = getUsernameCookie();
-
-    if (username != "")
-    {
-        alert ("Welcome " + username + "!");
-    }
-    else
-    {
-        username = prompt("What is your name? ", "");
-        if (username != "" && username != null)
-        {
-            setUsernameCookie(username, 10);
-            //document.getElementById('name').textContent = username;
-        }
-    }
-}
+/**
+ * Haaris Sohail
+ * G00709380   
+ * SWE642 Assignment 3: external JS file (logic.js)
+ * 03/15/2018
+ * 
+ * This is the JS file that handles user input.
+ * assignment3.html also has JS code, but only that which relies on jQuery.
+ *
+ */
 
 //calculate average and max from user input, then display on screen
 function calculateAverageAndMax()
@@ -200,5 +151,12 @@ function handleSubmittedUserData()
         document.getElementById("email").insertAdjacentHTML("afterend", "<p id=\"emailError\"> <b> Please enter a valid email adress. </b> </p>");
     }
 
-
+    //if everything checks out, scroll all the way to the top, as well as print a message at the top
+    if (radioChecked && checkboxCount >= 2 && 
+        enteredEmail.match(/^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/)
+        && enteredName.match(/^[a-zA-Z]+$/))
+        {
+            document.body.scrollTop = document.documentElement.scrollTop = 0;
+            document.getElementById("successfulSubmission").innerHTML = "<i> Thanks for filling out this survey! </i>"
+        }
 }

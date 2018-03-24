@@ -14,7 +14,7 @@
  <html xmlns = "http://www.w3.org/1999/xhtml">
     <head>
         <title> GMU CS Survey Page </title>
-
+        <link rel="stylesheet" href="http://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css"/>
         <style type = "text/css">
 
             h1  {
@@ -66,15 +66,123 @@
 
         </style>
 
-    <script type="text/javascript" src="js/logic.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/js-cookie@2/src/js.cookie.min.js"></script>
+    <script>
+
+        //long-story short, it turns out that trying to send requests to a server via
+        //an XMLHttpRequest gets really annoying because of the custom headers it sets (which kept giving me 405 responses).
+        //so I've decided to use the jQuery implementation of Ajax to send the same request,
+        //as jQuery uses JSONP to avoid all this CORS and 405 nonsense
+        //$("#zipCode").on('blur',function () {
+        function zipCodeHandler (zipcode)
+        {
+            //let user know that zip is being validated
+            document.getElementById('zipValidator').innerHTML = "<i> Checking zip... </i>";
+
+            //to elaborate on my comment above, rather than store one big JSON file on the server, I figured
+            //it would be much more efficient to send a GET request to a remote API to fetch the corresponding
+            //city and state for a zipcode. plus, the JSON returned from the API I am using is really easy to parse.
+            $.ajax({
+                type: "GET",
+                url: "http://ziptasticapi.com/"+zipcode,
+                dataType: 'json',
+                success: function (data) {
+
+                    console.log(data);
+
+                    //JSON data is already parsed into object
+                    var zipAPIJSON = data;
+
+                    //if JSON response includes "error" object, that means zipcode is invalid
+                    //so we need to print a response on the page
+                    if (zipAPIJSON.error != null)
+                    {
+                        document.getElementById('zipValidator').innerHTML = "<i> Zip code invalid! Please try again! </i>";
+
+                        //clear existing values if request fails, in order to clear up potential confusion
+                        document.getElementById('city').value = "";
+                        document.getElementById('stateCode').value = "";
+                    }
+                    //if response is successful, automatically fill city and state fields
+                    else
+                    {
+                        var state = zipAPIJSON.state;
+                        var city = zipAPIJSON.city;
+                        document.getElementById('zipValidator').innerHTML = "";
+                        document.getElementById('city').value = city;
+                        document.getElementById('stateCode').value = state;
+                    }
+                },
+                error: function (jqXHR, exception) {
+                    //for any response other than 200, print a message saying that the zipcode api service is unavailable
+                    if (jqXHR.status != 200)
+                    {
+                        document.getElementById('zipValidator').innerHTML = "<i> Zip code API unavailable. Please try later. </i>";
+                    }
+                }
+                
+            });
+        }
+        //});
+
+        //using jQuery's version of ajax to load my external JS files
+        $.ajax({
+            type: "GET",
+            url: "js/logic.js",
+            dataType: "script"
+        });
+
+        //tooltip for the GMU logo at the bottom of the screen
+        $(function () {
+            $("#gmu_logo_img").tooltip({ show: { effect: "blind"} });
+        });
+
+        //function to clear all user data (tagged with class '.user_input') - called when reset button is hit
+        function resetAllUserData()
+        {
+            /*
+            document.body.scrollTop = document.documentElement.scrollTop = 0;
+            $('.user_input').val('');
+            $('input[name=mostliked]').attr('checked',false);
+            $('input[name=foundout]').attr('checked',false);
+            document.getElementById("successfulSubmission").innerHTML = "";
+            document.getElementById("max").textContent = "";
+            document.getElementById("avg").textContent = "";
+            */
+
+            //simply two lines of jquery - clear all inputs that aren't radio/checkboxes and submit/reset buttons, and uncheck all radio/check boxes
+            document.getElementById("successfulSubmission").innerHTML = "";
+            document.getElementById("max").textContent = "";
+            document.getElementById("avg").textContent = "";
+            $(':input').not(':button, :submit, :reset, :hidden, :checkbox, :radio').val('');
+            $(':checkbox, :radio').prop('checked', false);
+            document.body.scrollTop = document.documentElement.scrollTop = 0; //scroll to top after everything is cleared 
+        }
+
+        //function to delete username cookie
+        //note: the classic "set expiry date to the past" wasn't working for me, so I am using a third party library (linked via script) to delete this cookie
+        function wrongUser()
+        {
+            resetAllUserData();
+            Cookies.remove('username', {path: '/'});
+            location.reload();
+        } 
+
+
+    </script>
+    <script src="js/cookies-logic.js"></script> <!-- loading external JS file with functions for username cookie -->
 
     </head>
 
     <body onload="checkUsernameCookie()">
-        <h1>GMU Department of Computer Science User Feedback Survey</h1>
+        <h1>GMU Department of Computer Science User Feedback Survey: Version 2</h1>
+        <h2 id="usernameHeader"></h2>
         <h3><i> Please fill out the following information below: </i></h3>
+        <h4 id="successfulSubmission"></h4>
 
-        <form name="usersurvey" onsubmit="handleSubmittedUserData(); return false">
+        <form name="usersurvey" onsubmit="handleSubmittedUserData(); return false" onreset="resetAllUserData(); return false">
 
             <!--
                  Good morning <span id = "username"></span>
@@ -83,76 +191,81 @@
             </script> -->
 
             <label><span> First Name: </span>
-                <input id = "firstName" type = "text" size = "35" maxlength="50" required autofocus autocomplete="on"/>
+                <input id = "firstName" type = "text" size = "35" maxlength="50" autofocus autocomplete="on" class="user_input"/>
             </label>
 
             <label><span>Last Name: </span> 
-                <input id = "lastName" type = "text" size = "35" maxlength="50" required autocomplete="on"/>
+                <input id = "lastName" type = "text" size = "35" maxlength="50" autocomplete="on" class="user_input"/>
             </label>
 
             <label>
                 <span>User ID: </span>
-                <input id = "userid" type = "text" size = "10" maxlength = "30" autocomplete="on">
+                <input id = "userid" type = "text" size = "10" maxlength = "30" autocomplete="on" class="user_input">
             </label>
 
             <label>
                 <span>Movie ID: </span>
-                <input id = "movieid" type = "text" size = "10" maxlength = "30" autocomplete="on">
+                <input id = "movieid" type = "text" size = "10" maxlength = "30" autocomplete="on" class="user_input">
             </label>
 
             <label>
                 <span>Movie Rating: </span>
-                <input id = "movierating" type = "text" size = "1" maxlength = "1" autocomplete="on">
+                <input id = "movierating" type = "text" size = "1" maxlength = "1" autocomplete="on" class="user_input">
             </label>
 
             <label>
                 <span>Timestamp: </span>
-                <input id = "timestamp" type = "text" size = "7" maxlength="10" autocomplete="on">
+                <input id = "timestamp" type = "text" size = "7" maxlength="10" autocomplete="on" class="user_input">
             </label>
 
             <label>
                 <span>Email: </span>
-                <input id = "email" type = "text" size = "50" maxlength="200" placeholder="yourname@email.com" required autocomplete="on"/>
+                <input id = "email" type = "text" size = "50" maxlength="200" placeholder="yourname@email.com" autocomplete="on" class="user_input"/>
             </label>
 
             <label>
                 <span>Telephone: </span>
-                <input id ="telnumber" type="text" size = "10" maxlength="10" placeholder="0123456789" autocomplete="on"/>
+                <input id ="telnumber" type="text" size = "10" maxlength="10" placeholder="0123456789" autocomplete="on" class="user_input" />
             </label>
 
             <label>
                 <span>Street Address: </span>
-                <input id = "address" type = "text" size = "75" maxlength = "500" autocomplete="on"/>
+                <input id = "address" type = "text" size = "75" maxlength = "500" autocomplete="on" class="user_input"/>
             </label>
 
             <label>
-                <span>City: </span>
-                <input id = "city" type = "text" size = "40" maxlength="200" autocomplete="on"/>
+                <span>City: </span> <input type="text" id="city" size = "50" readonly="readonly" class="user_input"/>
+                <!-- <input id = "city" type = "text" size = "40" maxlength="200" autocomplete="on"/> -->
             </label>
 
+            <br> 
+
             <label>
-                <span>State: </span>
-                <input id = "stateCode" type = "text" size = "5" maxlength = "5" autocomplete="on"/>
+                <span>State: </span> <input type="text" id="stateCode" size="2" readonly="readonly" class="user_input"/>
+                <!--<input id = "stateCode" type = "text" size = "5" maxlength = "5" autocomplete="on"/> -->
             </label>
+
+            <br> 
 
             <label>
                 <span>Zip: </span>
-                <input id = "zipCode" type = "text" size = "5" maxlength = "5" placeholder="01234" autocomplete="on"/>
+                <input id = "zipCode" type = "text" size = "5" maxlength = "5" placeholder="01234" autocomplete="on" onblur="zipCodeHandler(this.value)" class="user_input"/>
+                <br> <span id="zipValidator"></span> <br> 
             </label>
 
             <label>
                 <span>Phone Number: </span>
-                <input id = "phoneNumber" type = "text" size="10" maxlength="10" placeholder="5713120192" autocomplete="on"/>
+                <input id = "phoneNumber" type = "text" size="10" maxlength="10" placeholder="5713120192" autocomplete="on" class="user_input"/>
             </label>
 
             <label>
                 <span>Date of Survey: </span>
-                <input id = "surveyDate" type = "date" required>
+                <input id = "surveyDate" type = "date" class="user_input">
             </label>
 
             <label>
                 <span>Graduation Date: </span>
-                <input list = "months" name = "month" placeholder="Month" size="12">
+                <input list = "months" name = "month" placeholder="Month" size="12" class="user_input">
                 <datalist id = "months">
                     <option value = "January">
                     <option value = "February">
@@ -167,25 +280,25 @@
                     <option value = "November">
                     <option value = "December">
                 </datalist>
-                <input id = "gradYear" type = "text" size = "4" maxlength="4" placeholder="yyyy">
+                <input id = "gradYear" type = "text" size = "4" maxlength="4" placeholder="yyyy" class="user_input">
             </label>
 
             <br>
 
             <i> Please tell us what you liked most about the university: </i> <br>
-                    <input type="checkbox" name="mostliked" value="Sports"> Sports<br>
-                    <input type="checkbox" name="mostliked" value="Location"> Location<br>
-                    <input type="checkbox" name="mostliked" value="Campus"> Campus <br>
-                    <input type="checkbox" name="mostliked" value="DormRoom"> Dorm Rooms <br>
-                    <input type="checkbox" name="mostliked" value="atmos"> Atmosphere <br>
+                    <input type="checkbox" name="mostliked" value="Sports" class="user_input"> Sports<br>
+                    <input type="checkbox" name="mostliked" value="Location" class="user_input"> Location<br>
+                    <input type="checkbox" name="mostliked" value="Campus" class="user_input"> Campus <br>
+                    <input type="checkbox" name="mostliked" value="DormRoom" class="user_input"> Dorm Rooms <br>
+                    <input type="checkbox" name="mostliked" value="atmos" class="user_input"> Atmosphere <br>
         
             <br>
 
             <i> Please tell us how you became interested in the university: </i> <br>
-                    <input type="radio" name="foundout" value="Friends"> Friends <br>
-                    <input type="radio" name="foundout" value="Internet"> Internet <br>
-                    <input type="radio" name="foundout" value="Television"> Television  <br>
-                    <input type="radio" name="foundout" value="Other"> Other <br>
+                    <input type="radio" name="foundout" value="Friends" class="user_input"> Friends <br>
+                    <input type="radio" name="foundout" value="Internet" class="user_input"> Internet <br>
+                    <input type="radio" name="foundout" value="Television" class="user_input"> Television  <br>
+                    <input type="radio" name="foundout" value="Other" class="user_input"> Other <br>
 
             <br>
 
@@ -199,21 +312,22 @@
             <br> <br>
 
             <i> Please provide any additional comments in the text area below: </i> <br>
-            <textarea rows="5" cols="55"></textarea>
+            <textarea rows="5" cols="55" class="user_input"></textarea>
 
             <br> <br>
 
-            Data: <input id = "usernumbers" type = "text" size = "10" oninput="calculateAverageAndMax()"/>  <br> <br>
+            Data: <input id = "usernumbers" type = "text" size = "10" oninput="calculateAverageAndMax()" class="user_input"/>  <br> <br>
 
-            Max: <span id="max" name="maxValue"></span> <br> <br>
-            Avg: <span id="avg" name="avgValue"></span> <br> <br>
+            Max: <span id="max" name="maxValue" class="user_input"></span> <br> <br>
+            Avg: <span id="avg" name="avgValue" class="user_input"></span> <br> <br>
 
             <input type="submit" value="Submit" name="userSubmit">
             <input type="reset" value="Reset Data" name="userReset">
         </form>
 
         <div id="gmu_logo" class="bottom_right">
-            <img src="https://www2.gmu.edu/sites/all/modules/features/feature_core_theme/templates/resources/images/mason-logo-green.png" style="width:200px;height:200px">
+            <img id="gmu_logo_img" src="https://www2.gmu.edu/sites/all/modules/features/feature_core_theme/templates/resources/images/mason-logo-green.png" style="width:200px;height:200px"
+                title="Please visit http://www.gmu.edu for more information" />
         </div>
 
     </body>
